@@ -10,17 +10,16 @@ SUPPORTED = {
 }
 
 
-def update_properties(path: Path, paper: str, java: str) -> None:
-    lines = path.read_text(encoding="utf-8").splitlines()
-    out = []
-    for line in lines:
-        if line.startswith("paperVersion="):
-            out.append(f"paperVersion={paper}")
-        elif line.startswith("javaVersion="):
-            out.append(f"javaVersion={java}")
-        else:
-            out.append(line)
-    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+def update_build_file(path: Path, paper: str) -> None:
+    content = path.read_text(encoding="utf-8")
+    updated = content.replace(
+        'compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT")',
+        f'compileOnly("io.papermc.paper:paper-api:{paper}")'
+    ).replace(
+        'compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")',
+        f'compileOnly("io.papermc.paper:paper-api:{paper}")'
+    )
+    path.write_text(updated, encoding="utf-8")
 
 
 def resolve_gradle_command(base: Path) -> list[str]:
@@ -48,7 +47,7 @@ def resolve_gradle_command(base: Path) -> list[str]:
 
 def main() -> None:
     base = Path(__file__).resolve().parent
-    props = base / "gradle.properties"
+    build_file = base / "build.gradle.kts"
 
     print("빌드할 Paper 버전을 선택하세요:")
     for key, value in SUPPORTED.items():
@@ -60,7 +59,7 @@ def main() -> None:
         raise SystemExit(1)
 
     selected = SUPPORTED[choice]
-    update_properties(props, selected["paper"], selected["java"])
+    update_build_file(build_file, selected["paper"])
     print(f"선택 완료: {selected['label']}")
     print("Gradle로 JAR 빌드를 시작합니다...")
 
