@@ -1,9 +1,9 @@
-name: StarterPlugin
+name: RunningTest
 version: '0.1.0'
-main: com.example.plugin.StarterPlugin
+main: com.example.runningtest.RunningTestPlugin
 api-version: '1.20'
 authors: [ "codex" ]
-description: 달리기 속도 측정 플러그인
+description: /run 명령으로 달리기 속도를 측정합니다.
 commands:
   run:
     description: 시작/종료 지점을 기록해 달리기 속도를 계산합니다.
