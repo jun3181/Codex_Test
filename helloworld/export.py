@@ -27,16 +27,22 @@ def resolve_gradle_command(base: Path) -> list[str]:
     if sys.platform.startswith("win"):
         wrapper = base / "gradlew.bat"
         if wrapper.exists():
-            return [str(wrapper)]
-        if shutil.which("gradle"):
-            return ["gradle"]
-        raise FileNotFoundError("gradlew.bat 또는 gradle 명령을 찾을 수 없습니다.")
+            return ["cmd", "/c", str(wrapper)]
+
+        gradle_bat = shutil.which("gradle.bat") or shutil.which("gradle")
+        if gradle_bat:
+            return ["cmd", "/c", gradle_bat]
+
+        raise FileNotFoundError("gradlew.bat 또는 gradle(.bat) 명령을 찾을 수 없습니다.")
 
     wrapper = base / "gradlew"
     if wrapper.exists():
         return [str(wrapper)]
-    if shutil.which("gradle"):
-        return ["gradle"]
+
+    gradle_bin = shutil.which("gradle")
+    if gradle_bin:
+        return [gradle_bin]
+
     raise FileNotFoundError("gradlew 또는 gradle 명령을 찾을 수 없습니다.")
 
 
