@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import shutil
 import subprocess
+import sys
 
 SUPPORTED = {
     "1": {"label": "Paper 1.20.6", "paper": "1.20.6-R0.1-SNAPSHOT", "java": "21"},
@@ -21,6 +23,23 @@ def update_properties(path: Path, paper: str, java: str) -> None:
     path.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
+def resolve_gradle_command(base: Path) -> list[str]:
+    if sys.platform.startswith("win"):
+        wrapper = base / "gradlew.bat"
+        if wrapper.exists():
+            return [str(wrapper)]
+        if shutil.which("gradle"):
+            return ["gradle"]
+        raise FileNotFoundError("gradlew.bat 또는 gradle 명령을 찾을 수 없습니다.")
+
+    wrapper = base / "gradlew"
+    if wrapper.exists():
+        return [str(wrapper)]
+    if shutil.which("gradle"):
+        return ["gradle"]
+    raise FileNotFoundError("gradlew 또는 gradle 명령을 찾을 수 없습니다.")
+
+
 def main() -> None:
     base = Path(__file__).resolve().parent
     props = base / "gradle.properties"
@@ -39,7 +58,14 @@ def main() -> None:
     print(f"선택 완료: {selected['label']}")
     print("Gradle로 JAR 빌드를 시작합니다...")
 
-    result = subprocess.run(["gradle", "clean", "build"], cwd=base)
+    try:
+        gradle_cmd = resolve_gradle_command(base)
+    except FileNotFoundError as error:
+        print(f"빌드 도구를 찾지 못했습니다: {error}")
+        print("해결 방법: Gradle 설치 후 PATH 등록, 또는 프로젝트에 Gradle Wrapper(gradlew/gradlew.bat) 추가")
+        raise SystemExit(1)
+
+    result = subprocess.run([*gradle_cmd, "clean", "build"], cwd=base)
     if result.returncode != 0:
         print("빌드 실패: JDK 버전 또는 네트워크 환경을 확인하세요.")
         raise SystemExit(result.returncode)
